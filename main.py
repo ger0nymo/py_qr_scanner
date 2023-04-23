@@ -6,23 +6,28 @@ import time
 def main():
     camera = cv2.VideoCapture(0)
     ret, frame = camera.read()
-    read_qr_codes = []
+    last_read = ""
     while ret:
         ret, frame = camera.read()
         barcodes = pyzbar.decode(frame)
-        if len(barcodes) == 1: # csak ha egy QR kód van a képen
+        if len(barcodes) == 1:
           barcode_info = barcodes[0].data.decode('utf-8') 
-          # mivel másodpercenként rengeteg frame jön be, ezért rengetegszer is ismeri fel ugyanazt a qr kódot, viszont nekünk
-          # csak egyszer kell vele dolgoznunk, ezért a read_qr_codes listában tároljuk, hogy melyiket ismertük már fel, -> uaz. a qr kódot
-          # csak egyszer fogjuk feldolgozni
-          if barcode_info not in read_qr_codes:
-            read_qr_codes.append(barcode_info)
-            print(f"New Barcode: {barcode_info}")
-            print("most csinálunk valamit, de csak egyszer")
-            if len(read_qr_codes) >= 30:
-              read_qr_codes = []
+          
+          # Visualizing the QR code for debugging purposes
+          barcode = barcodes[0]
+          cv2.rectangle(frame, (barcode.rect.left, barcode.rect.top),
+            (barcode.rect.left + barcode.rect.width, barcode.rect.top + barcode.rect.height),
+           (0, 255, 0), 2)
+          cv2.putText(frame, barcode.data.decode('utf-8'), (barcode.rect.left, barcode.rect.top),
+          cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        cv2.imshow('Barcode/QR code reader', frame)
+          if barcode_info != last_read:
+            last_read = barcode_info
+            print(f"New Barcode: {barcode_info}")
+            
+
+        cv2.imshow('QR code reader', frame)
+
         if cv2.waitKey(100) & 0xFF == 27:
           break
     camera.release()
