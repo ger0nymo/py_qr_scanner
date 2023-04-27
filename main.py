@@ -2,8 +2,10 @@ import cv2
 from pyzbar import pyzbar
 import time
 import requests
+import jwt
+import secrets_env
 
-API_URL = 'https://qrhazi-backend.azurewebsites.net/qr';
+API_URL = 'https://qrhazi-backend.azurewebsites.net';
 
 def main():
     camera = cv2.VideoCapture(0)
@@ -19,12 +21,19 @@ def main():
             last_read = barcode_info
 
             header = {"Authorization": f"Bearer {barcode_info}"}
-            response = requests.get(API_URL + '/verify', headers=header)
+            response = requests.get(f"{API_URL}/qr/verify", headers=header)
+
+            print(barcode_info)
 
             if response.status_code == 200:
-              print(f"QR code is valid")
+              try: 
+                log_result = requests.post(f"{API_URL}/logging/create", headers=header)
+                print("User entered: " + log_result.text)
+              except:
+                print("User can't enter / qr code is invalid")
+
             else: 
-              print(f"QR code is invalid: {response.text}")
+              print(f"User can't enter / qr code is invalid: {response.text}")
 
         cv2.imshow('QR code reader', frame)
 
